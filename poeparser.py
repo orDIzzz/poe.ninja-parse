@@ -2,8 +2,6 @@
 'Класс для парсинга сайта poe-parser.ninja
 '''
 
-import lxml
-import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,7 +10,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from bs4 import BeautifulSoup
 import os
-import pprint
 
 class POEParser:
     def __init__(self):
@@ -141,7 +138,7 @@ class POEParser:
                         break
                     except NoSuchElementException:
                         break
-                soup = BeautifulSoup(driver.page_source, "lxml")
+                soup = BeautifulSoup(driver.page_source, 'lxml')
                 uncleaned_list = soup.select_one(waiting_element_selector + '>table>tbody')
                 if category in other_format_category:
                     name_selector = 'td>div>span'
