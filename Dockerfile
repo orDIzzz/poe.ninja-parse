@@ -5,7 +5,7 @@ RUN apt-get install firefox -y
 RUN python3.7 -V
 COPY . /PoE.Ninja.Parser
 WORKDIR /PoE.Ninja.Parser
-RUN chmod +x geckodriver && cp geckodriver /usr/local/bin
+RUN chmod +x geckodriver && cp geckodriver /app/.heroku/python/bin
 ENV LANG=C.UTF-8
 ENV LC_CTYPE="C.UTF-8"
 ENV LC_NUMERIC="C.UTF-8"
