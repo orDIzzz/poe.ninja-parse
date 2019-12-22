@@ -120,7 +120,7 @@ class POEParser:
         result = {}
         for category_name in category:
             category_result = []
-            driver = webdriver.Firefox(options=options, service_log_path=os.path.devnull, executable_path='geckodriver')
+            driver = webdriver.Firefox(options=options, service_log_path=os.path.devnull, executable_path='./geckodriver')
             league_url = self.main_link + league + '/' + self.__get_category_link(category_name)
             driver.get(league_url)
             do_it = True
