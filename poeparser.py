@@ -99,7 +99,7 @@ class POEParser:
             if category == category_name['category']:
                 return category_name['link']
 
-    def get_prices(self, category: list, league='challenge'):
+    def get_prices(self, category: list = [], league='challenge'):
         print(f'Works with: {[cat_name for cat_name in category]}')
         """
         Отправляет запрос на сайт poe-parser.ninja и возвращает словарь с ценами на предмет по запрошенным категориям
