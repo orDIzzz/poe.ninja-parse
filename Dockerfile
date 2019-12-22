@@ -1,7 +1,6 @@
 FROM ubuntu:latest
 MAINTAINER ordizzz
-RUN apt-get update && apt-get install python3.7 python3-pip build-essential python3-lxml -y
-RUN apt-get install firefox -y
+RUN apt-get update && apt-get install python3.7 python3-pip build-essential python3-lxml firefox -y
 RUN python3.7 -V
 COPY . /PoE.Ninja.Parser
 WORKDIR /PoE.Ninja.Parser
