@@ -20,5 +20,5 @@ ENV LC_TELEPHONE="C.UTF-8"
 ENV LC_MEASUREMENT="C.UTF-8"
 ENV LC_IDENTIFICATION="C.UTF-8"
 ENV LC_ALL=C.UTF-8
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt --upgrade
 CMD python3 main.py

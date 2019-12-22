@@ -100,19 +100,20 @@ class POEParser:
                 return category_name['link']
 
     def get_prices(self, category: list = [], league='challenge'):
-        print(f'Works with: {[cat_name for cat_name in category]}')
         """
         Отправляет запрос на сайт poe-parser.ninja и возвращает словарь с ценами на предмет по запрошенным категориям
         Формат словаря:
         {
-            'Fragments':
-            {
-                'Tul's Pure Breachstone': '40.0'
-            }
+            'Fragments':[
+                {
+                    'Tul's Pure Breachstone': '40.0'
+                }
+            ]
         }
         """
         if len(category) == 0:
             category = self.CATEGORIES
+        print(f'Works with: {[cat_name for cat_name in category]}')
         options = Options()
         options.headless = True
         other_format_category = ['Currency', 'Fragments']
