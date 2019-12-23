@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install python3.7 python3-pip build-essential pyth
 RUN python3.7 -V
 COPY . /PoE.Ninja.Parser
 WORKDIR /PoE.Ninja.Parser
-RUN chmod +x geckodriver && cp geckodriver /app/.heroku/python/bin
+RUN chmod +x geckodriver
 ENV LANG=C.UTF-8
 ENV LC_CTYPE="C.UTF-8"
 ENV LC_NUMERIC="C.UTF-8"
