@@ -7,9 +7,11 @@ verify_ssl = true
 
 [packages]
 requests = "*"
-selenium = "*"
-beautifulsoup4 = "*"
-lxml = "*"
+psycopg2 = "*"
+psycopg2binary = "*"
+peewee = "*"
+alive-progress = "*"
+psycopg2-binary = "*"
 
 [requires]
 python_version = "3.7"
