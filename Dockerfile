@@ -1,10 +1,9 @@
 FROM ubuntu:latest
 MAINTAINER ordizzz
-RUN apt-get update && apt-get install python3.7 python3-pip build-essential python3-lxml firefox -y
+RUN apt-get update && apt-get install python3.7 python3-pip build-essential -y
 RUN python3.7 -V
 COPY . /PoE.Ninja.Parser
 WORKDIR /PoE.Ninja.Parser
-RUN chmod +x geckodriver
 ENV LANG=C.UTF-8
 ENV LC_CTYPE="C.UTF-8"
 ENV LC_NUMERIC="C.UTF-8"
@@ -20,4 +19,5 @@ ENV LC_MEASUREMENT="C.UTF-8"
 ENV LC_IDENTIFICATION="C.UTF-8"
 ENV LC_ALL=C.UTF-8
 RUN pip3 install -r requirements.txt --upgrade
+EXPOSE 5000
 CMD python3 main.py

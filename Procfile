@@ -1,1 +1,1 @@
-worker: python3.7 main.py
+web: gunicorn main:main -t 120

@@ -8,10 +8,6 @@ from pandas import DataFrame
 
 class DataPutter:
     def __init__(self):
-        try:
-            Items.create_table()
-        except peewee.InternalError as e:
-            print(str(e))
         self.__active_leagues = self.__get_active_leagues()
         self.categories = self.__get_categories()
         self.__get_current_League()

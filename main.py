@@ -1,3 +1,4 @@
+import gunicorn
 from dataputter import DataPutter
 import flask
 import json
@@ -44,7 +45,7 @@ def get_update_date():
 
 def flask_start():
     print("Starting FLASK API SERVER")
-    app.debug = True
+    app.debug = False
     app.run()
 
 

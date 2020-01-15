@@ -7,14 +7,13 @@ verify_ssl = true
 
 [packages]
 requests = "*"
-psycopg2 = "*"
 peewee = "*"
 alive-progress = "*"
 flask = "*"
 itsdangerous = "*"
 schedule = "*"
-psycopg2-binary = "*"
 pandas = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
