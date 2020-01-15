@@ -2,10 +2,11 @@ from peewee import *
 import configparser
 config = configparser.ConfigParser()
 config.read("settings.ini")
-host = config.get("DBCon", "host")
-user = config.get("DBCon", "user")
-password = config.get("DBCon", "password")
-db_name = config.get("DBCon", "database")
+section = "DBCon"
+host = config.get(section, "host")
+user = config.get(section, "user")
+password = config.get(section, "password")
+db_name = config.get(section, "database")
 
 dbhandle = PostgresqlDatabase(
     db_name,
@@ -25,6 +26,7 @@ class Items(BaseModel):
     item_id = IntegerField(unique=True, null=False)
     name = CharField(max_length=100)
     category = CharField(max_length=30)
+    type = CharField(max_length=30)
     current = FloatField()
     current_hc = FloatField()
     standard = FloatField()

@@ -1,8 +1,10 @@
+import json
 import peewee
 from models import *
 import requests
+import datetime
 from alive_progress import alive_bar
-
+from pandas import DataFrame
 
 class DataPutter:
     def __init__(self):
@@ -10,25 +12,41 @@ class DataPutter:
             Items.create_table()
         except peewee.InternalError as e:
             print(str(e))
-        self.active_leagues = self.__get_active_leagues()
+        self.__active_leagues = self.__get_active_leagues()
         self.categories = self.__get_categories()
         self.__get_current_League()
+        self.__category_to_filter = ['enchantment', 'gem', 'base']
+        self.collected_items = self.__get_list()
+        self.last_update = datetime.datetime.now().strftime('%d %m %Y %H:%M:%S')
+        self.df_collected_items = DataFrame(self.collected_items)
+
+    def category_select(self, category):
+        return self.df_collected_items[self.df_collected_items["category"] == category].to_dict('records')
+
+    def __pretty_print(self, items):
+        for item in items:
+            print(json.dumps(item, indent=4))
+
+    def refresh_data(self):
+        self.collected_items = self.__get_list()
 
     def __get_all_items(self):
-        all_item = requests.get("https://api.poe.watch/itemdata").json()
         items = []
-        for item in all_item:
-            items.append({
-                'id': item['id'],
-                'name': item['name'],
-                'category': item['category']
-            })
+        all_items = requests.get("https://api.poe.watch/itemdata").json()
+        for item in all_items:
+            if not item['category'] in self.__category_to_filter:
+                items.append({
+                    'id': item['id'],
+                    'name': item['name'],
+                    'category': item['category'],
+                    'type': item.get('type', '')
+                })
         print(f'Collected {len(items)} items.')
         return items
 
     def __get_prices(self):
         prices = {}
-        for league in self.active_leagues:
+        for league in self.__active_leagues:
             clear_league_prices = {}
             league_prices = requests.get(f"https://api.poe.watch/compact?league={league}").json()
             for item in league_prices:
@@ -36,15 +54,16 @@ class DataPutter:
             prices[league] = clear_league_prices
         return prices
 
-    def get_list(self):
+    def __get_list(self):
         prices = self.__get_prices()
-        items = self.__get_all_items()[0:1100]
+        items = self.__get_all_items()
         with alive_bar(total=len(items), title='Scanning') as bar:
             for item in items:
-                for league in self.active_leagues:
+                for league in self.__active_leagues:
                     curr = [item_price for item_id, item_price in prices[league].items() if item_id == item['id']]
                     item[league] = curr[0] if len(curr) > 0 else 0.0
                 bar()
+        self.last_update = datetime.datetime.now()
         return items
 
     def __get_categories(self):
@@ -62,10 +81,11 @@ class DataPutter:
 
     def __get_current_League(self):
         leagues = requests.get("https://api.poe.watch/leagues").json()
-        self.standard = 'Standard'
-        self.standard_hc = 'Standard Hardcore'
-        self.curr_league = [league['name'] for league in leagues if league['id'] == len(leagues)][0]
-        self.curr_league_hc = [league['name'] for league in leagues if league['id'] == len(leagues) - 1][0]
+        self.__standard = 'Standard'
+        self.__standard_hc = 'Standard Hardcore'
+        self.__curr_league = [league['name'] for league in leagues if league['id'] == len(leagues)][0]
+        self.__curr_league_hc = [league['name'] for league in leagues if league['id'] == len(leagues) - 1][0]
+
 
     def save_items(self, itemlist):
         with alive_bar(title='Save items', total=len(itemlist)) as bar:
@@ -75,8 +95,8 @@ class DataPutter:
                         curr_item = (Items.update(
                                 standard=item['Standard'],
                                 standard_hc=item['Hardcore'],
-                                current=item[self.curr_league],
-                                current_hc=item[self.curr_league_hc]
+                                current=item[self.__curr_league],
+                                current_hc=item[self.__curr_league_hc]
                                 ).where(Items.item_id == item['id']))
                         curr_item.execute()
                 except peewee.DoesNotExist as e:
@@ -84,15 +104,13 @@ class DataPutter:
                         item_id=item['id'],
                         name=item['name'],
                         category=item['category'],
+                        type=item['type'],
                         standard=item['Standard'],
                         standard_hc=item['Hardcore'],
-                        current=item[self.curr_league],
-                        current_hc=item[self.curr_league_hc]
+                        current=item[self.__curr_league],
+                        current_hc=item[self.__curr_league_hc]
                     )
                     curr_item.save()
                 bar()
 
-if __name__ == '__main__':
-    dp = DataPutter()
-    dp.save_items(dp.get_list())
 

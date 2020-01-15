@@ -8,10 +8,13 @@ verify_ssl = true
 [packages]
 requests = "*"
 psycopg2 = "*"
-psycopg2binary = "*"
 peewee = "*"
 alive-progress = "*"
+flask = "*"
+itsdangerous = "*"
+schedule = "*"
 psycopg2-binary = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.7"
