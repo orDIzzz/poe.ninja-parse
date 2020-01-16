@@ -12,6 +12,7 @@
 
 alive-progress
 flask
+gunicorn
 itsdangerous
 pandas
 peewee
