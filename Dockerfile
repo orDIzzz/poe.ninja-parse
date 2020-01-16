@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 MAINTAINER ordizzz
-RUN apt-get update && apt-get install python3 python3-pip build-essential -y
+RUN apt-get update && apt-get install python3 python3-pip build-essential gunicorn -y
 RUN python3 -V
 COPY . /PoE.Ninja.Parser
 WORKDIR /PoE.Ninja.Parser
