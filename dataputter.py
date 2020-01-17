@@ -1,6 +1,4 @@
 import json
-import peewee
-from models import *
 import requests
 import datetime
 from alive_progress import alive_bar
@@ -81,32 +79,3 @@ class DataPutter:
         self.__standard_hc = 'Standard Hardcore'
         self.__curr_league = [league['name'] for league in leagues if league['id'] == len(leagues)][0]
         self.__curr_league_hc = [league['name'] for league in leagues if league['id'] == len(leagues) - 1][0]
-
-
-    def save_items(self, itemlist):
-        with alive_bar(title='Save items', total=len(itemlist)) as bar:
-            for item in itemlist:
-                try:
-                    if Items.get(Items.item_id == item['id']):
-                        curr_item = (Items.update(
-                                standard=item['Standard'],
-                                standard_hc=item['Hardcore'],
-                                current=item[self.__curr_league],
-                                current_hc=item[self.__curr_league_hc]
-                                ).where(Items.item_id == item['id']))
-                        curr_item.execute()
-                except peewee.DoesNotExist as e:
-                    curr_item = Items(
-                        item_id=item['id'],
-                        name=item['name'],
-                        category=item['category'],
-                        type=item['type'],
-                        standard=item['Standard'],
-                        standard_hc=item['Hardcore'],
-                        current=item[self.__curr_league],
-                        current_hc=item[self.__curr_league_hc]
-                    )
-                    curr_item.save()
-                bar()
-
-
