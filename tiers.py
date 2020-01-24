@@ -1,5 +1,6 @@
 import json
 import re
+import GUI.main
 
 
 class Tiers:
@@ -25,7 +26,7 @@ class Tiers:
         self.tierlist = tierlist
         self.tier_1_price = abs(float(tier_1_price))
         self.tier_2_price = abs(float(tier_2_price))
-        if self.tier_2_price > self.tier_1_price:
+        if self.tier_2_price >= self.tier_1_price:
             raise ValueError("Wrong tier prices. Tier 1 price must be more than Tier 2")
         self.exception = exception
 
@@ -231,20 +232,21 @@ class Uniques(Tiers):
                         print(f'Tier {tier} is:', line, index)
 
 
+uniques = Uniques('Uniques')
+
 fragments = Fragments('Fragments')
 print(fragments.find_lines())
+
+div_cards = Divination_cards('Divination Cards')
+
+fossils = Fossils('Fossils')  # tiers are (1, 2, 4) in NeverSink's filter
+
+resonators = Resonators('Resonators')
+
+scarabs = Tiers('Scarabs')
+
 oils = Oils('Oils')
 
 incubators = Tiers('Incubators')
 
-scarabs = Tiers('Scarabs')
-
-resonators = Resonators('Resonators')
-
-fossils = Fossils('Fossils')  # tiers are (1, 2, 4) in NeverSink's filter
-
-div_cards = Divination_cards('Divination Cards')
-
 uni_maps = Unique_Maps('Unique Maps')  # has only 2 tiers
-
-uniques = Uniques('Uniques')
