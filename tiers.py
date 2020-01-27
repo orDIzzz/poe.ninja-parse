@@ -2,35 +2,63 @@ import json
 import re
 
 
+def Save_filter(load_filter, save_filter):
+    with open(load_filter, 'r', encoding='utf-8') as loadf:
+        with open(save_filter, 'w', encoding='utf-8') as savef:
+            for index, line in load_filter:
+                pass
+
+
 class Tiers:
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json',
-                 tierlist=None, tier_1_price=12, tier_2_price=5,
-                 exception=('Timeworn Reliquary Key', 'Ancient Reliquary Key', 'Tabula Rasa')):
+    def __init__(self, contents, parse_file='parse.json', tierlist=None,
+                 tier_1_price=12, tier_2_price=5, tier_3_price=2,
+                 exception=('Timeworn Reliquary Key', 'Ancient Reliquary Key')):
         self.contents = contents
-        self.filter_file = filter_file
         self.parse_file = parse_file
         if tierlist is None:
             tierlist = ['1', '2', '3']
         self.tierlist = tierlist
         self.tier_1_price = abs(float(tier_1_price))
         self.tier_2_price = abs(float(tier_2_price))
+        self.tier_3_price = abs(float(tier_3_price))
         if self.tier_2_price >= self.tier_1_price:
             raise ValueError("Wrong tier prices. Tier 1 price must be more than Tier 2")
+        if self.tier_3_price >= self.tier_2_price:
+            raise ValueError("Wrong tier prices. Tier 2 price must be more than Tier 3")
         self.exception = exception
 
-    def take_bases(self, tier_1=None, tier_2=None, tier_3=None):
+    def find_lines(self, file):
+        all_lines = dict()
+        for tier in self.tierlist:
+            with open(file, 'r', encoding='utf-8') as filter_file:
+                for index, line in enumerate(filter_file):
+                    if re.search(tier, line) and re.search(self.contents.lower(), line):
+                        check = index
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        if check + 2 < index:
+                            all_lines.update({(self.contents, tier): index})
+                        else:
+                            all_lines.update({(self.contents, tier): check})
+        return all_lines
+
+    def take_bases(self, tier_1=None, tier_2=None, tier_3=None, tier_4=None):
         if tier_1 is None:
             tier_1 = []
         if tier_2 is None:
             tier_2 = []
         if tier_3 is None:
             tier_3 = []
+        if tier_4 is None:
+            tier_4 = []
         with open(self.parse_file, 'r', encoding='utf-8') as parsed:
             parsed = json.load(parsed)
-            self.manage_tiers(parsed, self.contents, tier_1, tier_2, tier_3)
+            self.manage_tiers(parsed, self.contents, tier_1, tier_2, tier_3, tier_4)
         return tier_1, tier_2, tier_3
 
-    def manage_tiers(self, parsed, contents, tier_1, tier_2, tier_3):
+    def manage_tiers(self, parsed, contents, tier_1, tier_2, tier_3, tier_4):
         for n in parsed[contents]:
             item_name = n['item_name']
             price = float(n['price'])
@@ -39,8 +67,10 @@ class Tiers:
                     tier_1.append(item_name)
                 elif self.tier_2_price < price <= self.tier_1_price:
                     tier_2.append(item_name)
-                else:
+                elif self.tier_3_price < price <= self.tier_2_price:
                     tier_3.append(item_name)
+                else:
+                    tier_4.append(item_name)
         return tier_1, tier_2, tier_3
 
     def remove_exception(self, item_name):
@@ -49,84 +79,100 @@ class Tiers:
         else:
             return item_name
 
-    def find_lines(self):
-        for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
-                for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(self.contents.lower(), line):
-                        print(f'Tier {tier} is:', line, index)
-                        break
-
     def __repr__(self):
         return f'<{self.contents}>'
 
 
 class Fragments(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json', tierlist=None):
-        super().__init__(contents, filter_file, parse_file, tier_1_price=12, tier_2_price=5)
+    def __init__(self, contents, parse_file='parse.json', tierlist=None):
+        super().__init__(contents, parse_file, tier_1_price=12, tier_2_price=5)
         if tierlist is None:
             self.tierlist = ['1', '2', '3', '4']
 
-    def find_lines(self):
+    def find_lines(self, file):
+        all_lines = dict()
         for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
+            with open(file, 'r', encoding='utf-8') as filter_file:
                 for index, line in enumerate(filter_file):
                     if re.search(tier, line) \
                             and re.search(f'type->{self.contents.lower()}', line) \
                             and re.search('scarabs', line) is None:
-                        print(f'Tier {tier} is:', line, index)
-                        break
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        if all_lines == {}:
+            print('find Nothing')
+        return all_lines
 
 
 class Oils(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json', tierlist=None,
-                 tier_1_price=12, tier_2_price=5):
-        super().__init__(contents, filter_file, parse_file, tierlist, tier_1_price, tier_2_price)
-
-    def find_lines(self):
-        self.contents = 'oil'
-        for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
-                for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(f'currency->{self.contents}', line):
-                        print(f'Tier {tier} is:', line, index)
-                        break
-
-
-class Resonators(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json', tierlist=None,
-                 tier_1_price=12, tier_2_price=5):
-        super().__init__(contents, filter_file, parse_file, tierlist, tier_1_price, tier_2_price)
-
-    def find_lines(self):
-        self.contents = 'resonator'
-        for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
-                for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(self.contents, line):
-                        print(f'Tier {tier} is:', line, index)
-                        break
-
-
-class Fossils(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json', tierlist=None):
-        super().__init__(contents, filter_file, parse_file, tier_1_price=12,
-                         tier_2_price=5)
+    def __init__(self, contents, parse_file='parse.json', tierlist=None, tier_1_price=12, tier_2_price=5,
+                 tier_3_price=2):
+        super().__init__(contents, parse_file, tierlist, tier_1_price, tier_2_price, tier_3_price)
         if tierlist is None:
             self.tierlist = ['1', '2', '3', '4']
 
-    def find_lines(self):
-        self.contents = 'fossil'
+    def find_lines(self, file):
+        contents = 'oil'
+        all_lines = dict()
         for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
+            with open(file, 'r', encoding='utf-8') as filter_file:
                 for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(self.contents, line):
-                        print(f'Tier {tier} is:', line, index)
+                    if re.search(tier, line) and re.search(f'currency->{contents}', line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
+
+
+class Resonators(Tiers):
+    def __init__(self, contents, parse_file='parse.json', tierlist=None,
+                 tier_1_price=12, tier_2_price=5):
+        super().__init__(contents, parse_file, tierlist, tier_1_price, tier_2_price)
+
+    def find_lines(self, file):
+        contents = 'resonator'
+        all_lines = dict()
+        for tier in self.tierlist:
+            with open(file, 'r', encoding='utf-8') as filter_file:
+                for index, line in enumerate(filter_file):
+                    if re.search(tier, line) and re.search(contents, line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
+
+
+class Fossils(Tiers):
+    def __init__(self, contents, parse_file='parse.json', tierlist=None):
+        super().__init__(contents, parse_file, tier_1_price=12, tier_2_price=5)
+        if tierlist is None:
+            self.tierlist = ['1', '2', '3', '4']
+
+    def find_lines(self, file):
+        contents = 'fossil'
+        all_lines = dict()
+        for tier in self.tierlist:
+            with open(file, 'r', encoding='utf-8') as filter_file:
+                for index, line in enumerate(filter_file):
+                    if re.search(tier, line) and re.search(contents, line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
 
 
 class Divination_cards(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json',
-                 tierlist=None, tier_1_price=12, tier_2_price=5,
+    def __init__(self, contents, parse_file='parse.json', tierlist=None,
+                 tier_1_price=12, tier_2_price=5, tier_3_price=0.65,
                  exception=('The Demoness', 'The Wolf\'s Shadow', "The Wolf\'s Legacy", 'The Master Artisan',
                             'A Mother\'s Parting Gift', 'Birth of the Three', 'Dark Temptation',
                             'Destined to Crumble', 'Dying Anguish', 'Lantador\'s Lost Love', 'Might is Right',
@@ -145,21 +191,26 @@ class Divination_cards(Tiers):
                             'Three Faces in the Dark', 'Three Voices', 'Vinia\'s Token', 'The Seeker',
                             'Buried Treasure', 'The Journey', 'Rain of Chaos', 'Her Mask', 'The Gambler',
                             'The Flora\'s Gift', 'The Scholar')):
-        super().__init__(contents, filter_file, parse_file, tierlist, tier_1_price, tier_2_price, exception)
+        super().__init__(contents, parse_file, tierlist, tier_1_price, tier_2_price, tier_3_price, exception)
 
-    def find_lines(self):
-        self.contents = 'divination'
+    def find_lines(self, file):
+        contents = 'divination'
+        all_lines = dict()
         for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
+            with open(file, 'r', encoding='utf-8') as filter_file:
                 for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(self.contents, line):
-                        print(f'Tier {tier} is:', line, index)
-                        break
+                    if re.search(tier, line) and re.search(contents, line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
 
 
 class Unique_Maps(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json',
-                 tierlist=None, tier_1_price=12, tier_2_price=5,
+    def __init__(self, contents, parse_file='parse.json', tierlist=None,
+                 tier_1_price=12, tier_2_price=5, tier_3_price=0,
                  exception=('Amber Amulet', 'Assassin Bow', 'Sapphire Ring', 'Triumphant Lamellar', 'Agate Amulet',
                             'Topaz Ring', 'Saint\'s Hauberk', 'Penetrating Arrow Quiver', 'Jade Amulet',
                             'Two-Stone Ring', 'Leather Belt', 'Imperial Skean', 'Iron Ring', 'Magistrate Crown',
@@ -176,48 +227,78 @@ class Unique_Maps(Tiers):
                             'Skinning Knife', 'Sledgehammer', 'Spiraled Wand', 'Strapped Leather',
                             'Tarnished Spirit Shield', 'Velvet Gloves', 'Velvet Slippers', 'Vine Circlet',
                             'War Buckler', 'Wild Leather', 'Woodsplitter')):
-        super().__init__(contents, filter_file, parse_file, tierlist, tier_1_price, tier_2_price, exception)
+        super().__init__(contents, parse_file, tierlist, tier_1_price, tier_2_price, tier_3_price, exception)
 
-    def find_lines(self):
-        self.contents = 'maps'
+    def find_lines(self, file):
+        contents = 'maps'
+        all_lines = dict()
         for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
+            with open(file, 'r', encoding='utf-8') as filter_file:
                 for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(f'unique->{self.contents}', line):
-                        print(f'Tier {tier} is:', line, index)
+                    if re.search(tier, line) and re.search(f'unique->{contents}', line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
 
 
 class Uniques(Tiers):
-    def __init__(self, contents, filter_file='HiEnd.filter', parse_file='parse.json',
-                 tierlist=None, tier_1_price=12, tier_2_price=5,
-                 unique_types=('Unique Jewels', 'Unique Flasks', 'Unique Weapons',
-                               'Unique Armours', 'Unique Accessories')):
-        super().__init__(contents, filter_file, parse_file, tierlist, tier_1_price,
-                         tier_2_price)
+    def __init__(self, contents, parse_file='parse.json', tierlist=None,
+                 tier_1_price=12, tier_2_price=5, tier_3_price=2,
+                 exception=('Amber Amulet', 'Assassin Bow', 'Sapphire Ring', 'Triumphant Lamellar', 'Agate Amulet',
+                            'Topaz Ring', 'Saint\'s Hauberk', 'Penetrating Arrow Quiver', 'Jade Amulet',
+                            'Two-Stone Ring', 'Leather Belt', 'Imperial Skean', 'Iron Ring', 'Magistrate Crown',
+                            'Murder Mitts', 'Onyx Amulet', 'Crusader Gloves', 'Studded Belt', 'Sulphur Flask',
+                            'Turquoise Amulet', 'Sorcerer Boots', 'Judgement Staff', 'Stibnite Flask', 'Brass Maul',
+                            'Clasped Boots', 'Cleaver', 'Coral Ring', 'Crude Bow', 'Crusader Plate', 'Crystal Wand',
+                            'Death Bow', 'Fire Arrow Quiver', 'Gavel', 'Gilded Sallet', 'Gnarled Branch',
+                            'Goathide Gloves', 'Gold Amulet', 'Golden Buckler', 'Great Crown', 'Great Mallet',
+                            'Iron Circlet', 'Iron Hat', 'Iron Mask', 'Iron Staff', 'Ironscale Boots', 'Jade Hatchet',
+                            'Jagged Maul', 'Latticed Ringmail', 'Leather Hood', 'Long Bow', 'Moonstone Ring',
+                            'Ornate Sword', 'Painted Buckler', 'Plank Kite Shield', 'Plate Vest', 'Reaver Sword',
+                            'Reinforced Greaves', 'Royal Bow', 'Royal Staff', 'Rusted Sword', 'Scholar Boots',
+                            'Serrated Arrow Quiver', 'Sharktooth Arrow Quiver', 'Skinning Knife', 'Sledgehammer',
+                            'Spiraled Wand', 'Strapped Leather', 'Tarnished Spirit Shield', 'Velvet Gloves',
+                            'Velvet Slippers', 'Vine Circlet', 'War Buckler', 'Wild Leather', 'Woodsplitter',
+                            'Cobalt Jewel', 'Crimson Jewel', 'Viridian Jewel', 'Simple Robe'),
+                 unique_types=('Unique Jewels', 'Unique Flasks', 'Unique Weapons', 'Unique Armours',
+                               'Unique Accessories')):
+        super().__init__(contents, parse_file, tierlist, tier_1_price, tier_2_price, tier_3_price, exception)
         self.unique_types = unique_types
         if tierlist is None:
-            self.tierlist = ['1', '2']
+            self.tierlist = ['1', '2', '4']
 
-    def take_bases(self, tier_1=None, tier_2=None, tier_3=None):
+    def take_bases(self, tier_1=None, tier_2=None, tier_3=None, tier_4=None):
         if tier_1 is None:
             tier_1 = []
         if tier_2 is None:
             tier_2 = []
         if tier_3 is None:
             tier_3 = []
+        if tier_4 is None:
+            tier_4 = []
         with open(self.parse_file, 'r', encoding='utf-8') as parsed:
             parsed = json.load(parsed)
             for contents in self.unique_types:
                 if contents in parsed.keys():
-                    self.manage_tiers(parsed, contents, tier_1, tier_2, tier_3)
-        return tier_1, tier_2, tier_3
+                    self.manage_tiers(parsed, contents, tier_1, tier_2, tier_3, tier_4)
+        return tier_1, tier_2, tier_3, tier_4
 
-    def find_lines(self):
+    def find_lines(self, file=''):
+        all_lines = dict()
         for tier in self.tierlist:
-            with open(self.filter_file, 'r', encoding='utf-8') as filter_file:
+            with open(file, 'r', encoding='utf-8') as filter_file:
                 for index, line in enumerate(filter_file):
-                    if re.search(tier, line) and re.search(f'type->{self.contents.lower()}', line):
-                        print(f'Tier {tier} is:', line, index)
+                    if re.search(tier, line) and re.search(f'type->{self.contents.lower()}', line) \
+                            and not re.search('prophecy', line):
+                        for found_index, found_line in enumerate(filter_file):
+                            index += 1
+                            if re.match('BaseType', found_line):
+                                break
+                        all_lines.update({(self.contents, tier): index})
+        return all_lines
 
 
 uniques = Uniques('Uniques')
@@ -231,6 +312,17 @@ incubators = Tiers('Incubators')
 uni_maps = Unique_Maps('Unique Maps')  # has only 2 tiers
 
 if __name__ == "__main__":
-    print(resonators.take_bases())
-    print('')
-    print(resonators.take_bases())
+    file_filter = 'FilterBlade.filter'
+    lines = dict()
+    lines.update(uniques.find_lines(file_filter))
+    lines.update(fossils.find_lines(file_filter))
+    lines.update(oils.find_lines(file_filter))
+    lines.update(fragments.find_lines(file_filter))
+    lines.update(div_cards.find_lines(file_filter))
+    lines.update(resonators.find_lines(file_filter))
+    lines.update(incubators.find_lines(file_filter))
+    lines.update(uni_maps.find_lines(file_filter))
+    lines.update(scarabs.find_lines(file_filter))
+    print(f'Not sorted:{lines}')
+    lines = {k: v for k, v in sorted(lines.items(), key=lambda item: item[1])}
+    print(f'Sorted by values: {lines}')
