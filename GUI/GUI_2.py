@@ -376,7 +376,6 @@ class Ui_MainWindow(object):
         self.SaveFilter_label.setText(_translate("MainWindow", "Save .filter file"))
         self.OverrideCheck.setText(_translate("MainWindow", "Override .filter file"))
         self.LoadBtn.setText(_translate("MainWindow", "Load"))
-        self.SortBtn.setToolTip(_translate("MainWindow", "<html><head/><body><p><br/></p></body></html>"))
         self.SortBtn.setText(_translate("MainWindow", "Sort Items"))
         self.SaveBtn.setText(_translate("MainWindow", "Save"))
         self.Autoupdate_label.setText(_translate("MainWindow", "Autoupdate"))
